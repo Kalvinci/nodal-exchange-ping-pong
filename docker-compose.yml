@@ -1,0 +1,64 @@
+services:
+    rabbitmq:
+        image: rabbitmq:3.13.7-management
+        container_name: rabbitmq
+        hostname: rabbitmq
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        healthcheck:
+            test: rabbitmq-diagnostics check_port_connectivity
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 5s
+        deploy:
+            resources:
+                limits:
+                    memory: 700m
+        networks:
+            - ping-pong-network
+
+    service-2:
+        build: ./service-2
+        container_name: service-2
+        ports:
+            - "8081:8081"
+        healthcheck:
+            test: "curl --fail --silent localhost:8081/actuator/health/readiness | grep UP || exit 1"
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 10s
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+        deploy:
+            resources:
+                limits:
+                    memory: 700m
+        environment:
+            SPRING_RABBITMQ_HOST: "rabbitmq"
+        networks:
+            - ping-pong-network
+
+    service-1:
+        build: ./service-1
+        container_name: service-1
+        ports:
+            - "8080:8080"
+        depends_on:
+            service-2:
+                condition: service_healthy
+        deploy:
+            resources:
+                limits:
+                    memory: 700m
+        environment:
+            SPRING_RABBITMQ_HOST: "rabbitmq"
+        networks:
+            - ping-pong-network
+
+networks:
+    ping-pong-network:
+        driver: bridge
