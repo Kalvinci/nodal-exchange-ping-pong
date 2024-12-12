@@ -23,14 +23,12 @@ class PingPongService(private val rabbitTemplate: RabbitTemplate) {
     @RabbitListener(queues = [SUBSCRIBE_QUEUE])
     fun receive(message: String) {
         LOGGER.info("Service 2 received message: {}", message)
+        serve("pong")
         try {
             Thread.sleep(10_000)
         } catch (e: InterruptedException) {
             throw RuntimeException(e)
         }
-        when (message) {
-            "ping" -> serve("pong")
-            "pong" -> serve("ping")
-        }
+        serve("ping")
     }
 }

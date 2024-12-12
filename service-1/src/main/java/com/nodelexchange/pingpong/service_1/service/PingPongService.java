@@ -30,15 +30,12 @@ public class PingPongService {
     @RabbitListener(queues = SUBSCRIBE_QUEUE)
     public void receive(String message) {
         LOGGER.info("Service 1 received message: {}", message);
+        serve("pong");
         try {
             Thread.sleep(10_000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        if (message.equals("ping")) {
-            serve("pong");
-        } else if (message.equals("pong")) {
-            serve("ping");
-        }
+        serve("ping");
     }
 }
